@@ -2,36 +2,40 @@ package app
 
 import (
 	"context"
+	"math/rand"
 	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Service struct {
-	urlDAO     *UrlDAO
-	idProvider *IDProvider
+	urlDAO *UrlDAO
+	rnd    *rand.Rand
 }
 
-func NewService(urlDAO *UrlDAO, idProvider *IDProvider) *Service {
+func NewService(urlDAO *UrlDAO) *Service {
 	return &Service{
-		urlDAO:     urlDAO,
-		idProvider: idProvider,
+		urlDAO: urlDAO,
+		rnd:    rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
 func (s *Service) Shorten(ctx context.Context, url string, ttlDays int) (*ShortURL, error) {
-	shortID, err := s.idProvider.GetID(ctx)
-	if err != nil {
-		return nil, err
-	}
 	shortURL := &ShortURL{
-		ID:       shortID,
 		URL:      url,
 		ExpireAt: getExpirationTime(ttlDays),
 	}
-	err = s.urlDAO.Insert(ctx, shortURL)
-	if err != nil {
-		return nil, err
+	for it := 0; it < 10; it++ {
+		shortURL.ID = s.generateRandomID()
+		err := s.urlDAO.Insert(ctx, shortURL)
+		if err == nil {
+			return shortURL, nil
+		}
+		if !mongo.IsDuplicateKeyError(err) {
+			return nil, err
+		}
 	}
-	return shortURL, nil
+	return nil, ErrCollision
 }
 
 func (s *Service) Update(ctx context.Context, id string, url string, ttlDays int) (*ShortURL, error) {
@@ -56,6 +60,17 @@ func (s *Service) GetFullURL(ctx context.Context, shortURL string) (string, erro
 		return "", err
 	}
 	return sURL.URL, nil
+}
+
+var symbols = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+func (s *Service) generateRandomID() string {
+	const idLength = 6
+	id := make([]rune, idLength)
+	for i := range id {
+		id[i] = symbols[s.rnd.Intn(len(symbols))]
+	}
+	return string(id)
 }
 
 func getExpirationTime(ttlDays int) time.Time {

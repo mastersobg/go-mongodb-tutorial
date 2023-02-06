@@ -72,6 +72,10 @@ func (h *Handler) GetFullURL(rw web.ResponseWriter, req *web.Request) (interface
 	return h.service.GetFullURL(req.Context(), val)
 }
 
+func (h *Handler) Ping(rw web.ResponseWriter, req *web.Request) (interface{}, error) {
+	return nil, nil
+}
+
 type EndpointHandler func(rw web.ResponseWriter, req *web.Request) (interface{}, error)
 
 func WrapEndpoint(h EndpointHandler) interface{} {

@@ -14,7 +14,7 @@ type UrlDAO struct {
 
 func NewUrlDAO(ctx context.Context, client *mongo.Client) (*UrlDAO, error) {
 	dao := &UrlDAO{
-		c: client.Database(database).Collection("shortUrls"),
+		c: client.Database("core").Collection("shortUrls"),
 	}
 	if err := dao.createIndices(ctx); err != nil {
 		return nil, err

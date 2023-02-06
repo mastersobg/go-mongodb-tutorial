@@ -9,8 +9,3 @@ type ShortURL struct {
 	URL      string    `bson:"url"`
 	ExpireAt time.Time `bson:"expireAt,omitempty"`
 }
-
-type UrlID struct {
-	ID   string `bson:"_id"`
-	Used bool   `bson:"used,omitempty"`
-}
