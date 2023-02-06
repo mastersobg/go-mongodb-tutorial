@@ -4,6 +4,6 @@ import "errors"
 
 var (
 	ErrBadRequest = errors.New("bad request")
-	ErrIDNotFound = errors.New("id not found")
 	ErrNotFound   = errors.New("not found")
+	ErrCollision  = errors.New("failed to create short link due to collision")
 )
