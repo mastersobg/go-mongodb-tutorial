@@ -29,10 +29,23 @@ func (dao *UrlDAO) createIndices(ctx context.Context) error {
 	})
 	return err
 }
-
 func (dao *UrlDAO) Insert(ctx context.Context, shortURL *ShortURL) error {
 	_, err := dao.c.InsertOne(ctx, shortURL)
 	return err
+}
+
+func (dao *UrlDAO) FindByID(ctx context.Context, id string) (*ShortURL, error) {
+	filter := bson.D{{"_id", id}}
+	var shortURL ShortURL
+	err := dao.c.FindOne(ctx, filter).Decode(&shortURL)
+	switch {
+	case err == nil:
+		return &shortURL, nil
+	case err == mongo.ErrNoDocuments:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
 }
 
 func (dao *UrlDAO) Update(ctx context.Context, url *ShortURL) error {
@@ -57,18 +70,4 @@ func (dao *UrlDAO) DeleteByID(ctx context.Context, id string) error {
 		return ErrNotFound
 	}
 	return nil
-}
-
-func (dao *UrlDAO) FindByID(ctx context.Context, id string) (*ShortURL, error) {
-	filter := bson.D{{"_id", id}}
-	var shortResult *ShortURL
-	err := dao.c.FindOne(ctx, filter).Decode(&shortResult)
-	switch {
-	case err == nil:
-		return shortResult, nil
-	case err == mongo.ErrNoDocuments:
-		return nil, ErrNotFound
-	default:
-		return nil, err
-	}
 }

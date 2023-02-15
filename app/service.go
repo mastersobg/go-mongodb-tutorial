@@ -9,8 +9,8 @@ import (
 )
 
 type Service struct {
-	urlDAO *UrlDAO
 	rnd    *rand.Rand
+	urlDAO *UrlDAO
 }
 
 func NewService(urlDAO *UrlDAO) *Service {
@@ -25,6 +25,7 @@ func (s *Service) Shorten(ctx context.Context, url string, ttlDays int) (*ShortU
 		URL:      url,
 		ExpireAt: getExpirationTime(ttlDays),
 	}
+
 	for it := 0; it < 10; it++ {
 		shortURL.ID = s.generateRandomID()
 		err := s.urlDAO.Insert(ctx, shortURL)
@@ -73,9 +74,10 @@ func (s *Service) generateRandomID() string {
 	return string(id)
 }
 
-func getExpirationTime(ttlDays int) time.Time {
+func getExpirationTime(ttlDays int) *time.Time {
 	if ttlDays <= 0 {
-		return time.Time{}
+		return nil
 	}
-	return time.Now().Add(time.Hour * 24 * time.Duration(ttlDays))
+	t := time.Now().Add(time.Hour * 24 * time.Duration(ttlDays))
+	return &t
 }
